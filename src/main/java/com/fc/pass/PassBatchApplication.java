@@ -14,7 +14,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
-@EnableBatchProcessing // Batch를 위한 Processing 허용 설정
 @SpringBootApplication
 public class PassBatchApplication {
 
