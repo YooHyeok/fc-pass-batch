@@ -1,0 +1,20 @@
+#spring:
+#  datasource:
+#    url: jdbc:h2:mem:mydb
+#    username: pass_local
+#    password: passlocal123
+#    driver-class-name: org.h2.Driver
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/pass_local?zeroDateTimeBehavior=convertToNull&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+    #zeroDateTimeBehavior=convertToNull : 로컬데이트 타입과 같은 값들이 0 일 경우 null로 변경
+    username: pass_local_user
+    password: passlocal123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+
+  batch:
+    jdbc:
+      initialize-schema: always # Batch테이블 자동 생성
+
