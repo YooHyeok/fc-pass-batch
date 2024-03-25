@@ -1,0 +1,25 @@
+version: '3.8' # Docker Compose 파일의 버전
+
+services:
+  mysql:
+    container_name: mysql_local
+    image: mysql:8.0.30
+    volumes: # Docker 컨테이너가 삭제될때 데이터도 함께 삭제된다. 이러한 생명주기와 상관없이 데이터를 유지할 수 있도록 하는 방법
+      - ./db/:/etc/mysql/conf.d
+      # host 디렉토리:컨테이너 - host가 그대로 컨테이너를 생성하며 연결된다.
+      # 해당 정보를 가지고 있으면 컨테이너를 내렸다 올려도 호스트에 정의한 데이터가 변함없이 들어가게 된다.
+      # 호스트에서 설정 파일과 초기실행할 쿼리들을 관리하기 위함이다.
+      # MySQL서버를 설치하게 되면 기본적으로 my.cnf라는 이름의 설정파일로 따르게 되며,
+      # conf.d 디렉토리 하위의 파일에 설정하고 싶은 커스텀 설정 파일을 넣어주면 된다.
+      - ./db/initdb.d:/docker-entrypoint-initdb.d
+      # 컨테이너가 시작되면 해당 디렉토리에 존재하는 sh, sql file을 실행한다.
+      # sql파일에 create table문이 추가되면 테이블이 생성되고, insert문으로는 초기 데이터 설정도 가능하다.
+      # 주의점은 파일 명에 따라 알파벳 순으로 실행되므로 먼저 create가 되도록 설정해야 한다.
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_DATABASE=pass_local
+      - MYSQL_USER=pass_local_user
+      - MYSQL_PASSWORD=passlocal123
+      - MYSQL_ROOT_PASSWORD=passlocal123
+      - TZ=Asia/Seoul
