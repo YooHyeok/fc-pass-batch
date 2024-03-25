@@ -11,4 +11,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface PackageRepository extends JpaRepository<PackageEntity, Integer> {
+    List<PackageEntity> findByCreatedAtAfter(LocalDateTime dateTime, Pageable packageSeq);
+
+    @Transactional
+    @Modifying // 데이터가 변경되는 Insert Update Delete에서 사용되고 허용되지 않으면 에러 발생
+    @Query(value = "UPDATE PackageEntity  p " +
+            "          SET p.count = :count," +
+            "              p.period = :period" +
+            "        WHERE p.packageSeq = :packageSeq")
+    int updateCountAndPeriod(Integer packageSeq, Integer count, Integer period);
 }
