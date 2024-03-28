@@ -70,7 +70,8 @@ public class ExpirePassesJobConfig {
         // status 상태가 진행중이고, 만료일자이거나 보다 지난 조건의 Pass 만료 조회 쿼리
         String sql = "SELECT p FROM PassEntity p WHERE p.status = :status and p.endedAt <= :endedAt";
         // 파라미터 Map객체 : status : PROGRESSED(진행중) / endedAt : 현재시간
-        Map<String, Object> parameter = Map.of("status", PassStatus.PROGRESSED, "endedAt", LocalDateTime.now());        return new JpaCursorItemReaderBuilder<PassEntity>()
+        Map<String, Object> parameter = Map.of("status", PassStatus.PROGRESSED, "endedAt", LocalDateTime.now());
+        return new JpaCursorItemReaderBuilder<PassEntity>()
                 .name("expirePassesItemReader")
                 .entityManagerFactory(entityManagerFactory) //JPA기반을 사용하므로 EntityManagerFactory 빈을 주입한다.
                 .queryString(sql) 
