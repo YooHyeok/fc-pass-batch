@@ -2,6 +2,7 @@ package com.fc.pass.repository.booking;
 
 import com.fc.pass.repository.BaseEntity;
 import com.fc.pass.repository.booking.BookingStatus;
+import com.fc.pass.repository.user.UserEntity;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -30,4 +31,7 @@ public class BookingEntity extends BaseEntity {
     private LocalDateTime endedAt;
     private LocalDateTime cancelledAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "userId", insertable = false, updatable = false)
+    private UserEntity userEntity;
 }
