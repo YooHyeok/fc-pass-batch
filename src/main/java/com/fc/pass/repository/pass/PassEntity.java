@@ -1,5 +1,6 @@
 package com.fc.pass.repository.pass;
 
+import com.fc.pass.repository.BaseEntity;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -9,7 +10,7 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Table(name = "pass")
-public class PassEntity {
+public class PassEntity extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) // 기본 키 생성을 DB에 위임합니다. (AUTO_INCREMENT)
     private Integer passSeq;
     private Integer packageSeq;
@@ -21,9 +22,5 @@ public class PassEntity {
     private LocalDateTime startedAt;
     private LocalDateTime endedAt;
     private LocalDateTime expiredAt;
-
-    @CreationTimestamp
-    @Column(updatable = false, nullable = false)
-    private LocalDateTime createdAt;
 
 }
