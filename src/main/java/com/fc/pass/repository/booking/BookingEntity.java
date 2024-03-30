@@ -2,6 +2,7 @@ package com.fc.pass.repository.booking;
 
 import com.fc.pass.repository.BaseEntity;
 import com.fc.pass.repository.booking.BookingStatus;
+import com.fc.pass.repository.pass.PassEntity;
 import com.fc.pass.repository.user.UserEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,4 +35,10 @@ public class BookingEntity extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userId", insertable = false, updatable = false)
     private UserEntity userEntity;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "passSeq", insertable = false, updatable = false)
+    private PassEntity passEntity;
+
+
 }
