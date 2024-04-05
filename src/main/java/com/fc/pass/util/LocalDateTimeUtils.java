@@ -1,6 +1,6 @@
 package com.fc.pass.util;
 
-import com.vladmihalcea.hibernate.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
