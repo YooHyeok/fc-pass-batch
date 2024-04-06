@@ -46,7 +46,7 @@ class AddPassesTaskletTest {
     void test_execute() throws Exception {
         //given
         final String userGroupId = "GROUP";
-        final String userId = "A100000";
+        final String userId = "A1000000";
         final Integer packageSeq = 1;
         final Integer count = 10;
 
