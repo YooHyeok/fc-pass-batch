@@ -231,3 +231,164 @@ chunk기반의 step에서는 chunk단위로 적용되고 각자 독립적인 tra
 
 ## Git Flow 전략
 `Master` → `Develop` → `feature/do-something`
+
+# Application 구동 Batch 테스트
+```java
+@EnableBatchProcessing
+@SpringBootApplication
+public class PassBatchApplication {
+    /* 생략 */
+}
+```
+`@EnableBatchProcessing` 애노테이션을 추가한다.  
+해당 애노테이션을 통해 스프링 배치가 작동된다.  
+스프링 배치의 모든 초기화 및 실행을 이루고 총 4개의 설정 클래스를 실행시킨다.
+스프링 부트 배치의 자동 설정 클래스가 실행되므로 빈으로 등록된 JOB을 초기화해서 초기화와 동시에 JOB을 수행하도록 구성되어 있다.
+
+JOB을 만들기 위해서는 Step을 만든 후 Step을 기반으로 Job을 구성해야 하므로  
+다음으로는 JOB과 STEP을 위한 의존성 주입을 하도록 한다.
+```java
+private final JobBuilderFactory jobBuilderFactory;
+private final StepBuilderFactory stepBuilderFactory;
+
+public PassBatchApplication(JobBuilderFactory jobBuilderFactory, StepBuilderFactory stepBuilderFactory) {
+    this.jobBuilderFactory = jobBuilderFactory;
+    this.stepBuilderFactory = stepBuilderFactory;
+}
+```
+
+#### JobBuilderFactory Bean 주입 에러
+```text/plain
+Could not autowire. No beans of 'JobBuilderFactory' type found
+```
+의존성 주입시 위와 같은 오류 발생시 Gradle Refresh를 한 후 우측 하단에 아래와 같은 IDE 알림창에서 추가 설정을 해주면 해결된다.
+```text/plain
+suggested plugins jakarta EE: Batch Applications, Spring Batch avaliable for dependencies
+```
+
+### Step Bean 등록
+```java
+@Bean
+public Step passStep() {
+    return this.stepBuilderFactory.get("passStep") // Step의 이름을 선언한다.
+            .tasklet((contribution, chunkContext) -> { //Tasklet 방식으로 Tasklet 인터페이스의 execute() 메소드를 람다로 구현
+                System.out.println("Execute PassStep");
+                System.out.println("contribution = " + contribution + ", chunkContext = " + chunkContext);
+                return RepeatStatus.FINISHED; // 종료
+            }).build();
+}
+```
+### Job Bean 등록
+```java
+	@Bean
+	public Job passJob() {
+		return this.jobBuilderFactory.get("passJob")
+				.start(passStep())
+				.build();
+	}
+```
+
+# Docker 설정
+
+- `./docker-compose.yml` 파일
+
+    ```yaml
+    version: '3.8' # Docker Compose 파일의 버전
+    
+    services:
+      mysql:
+        container_name: mysql_local
+        image: mysql:8.0.30
+        volumes: # Docker 컨테이너가 삭제될때 데이터도 함께 삭제된다. 이러한 생명주기와 상관없이 데이터를 유지할 수 있도록 하는 방법
+          - ./db/:/etc/mysql/conf.d
+          # host 디렉토리:컨테이너 - host가 그대로 컨테이너를 생성하며 연결된다.
+          # 해당 정보를 가지고 있으면 컨테이너를 내렸다 올려도 호스트에 정의한 데이터가 변함없이 들어가게 된다.
+          # 호스트에서 설정 파일과 초기실행할 쿼리들을 관리하기 위함이다.
+          # MySQL서버를 설치하게 되면 기본적으로 my.cnf라는 이름의 설정파일로 따르게 되며,
+          # conf.d 디렉토리 하위의 파일에 설정하고 싶은 커스텀 설정 파일을 넣어주면 된다.
+          - ./db/initdb.d:/docker-entrypoint-initdb.d
+          # 컨테이너가 시작되면 해당 디렉토리에 존재하는 sh, sql file을 실행한다.
+          # sql파일에 create table문이 추가되면 테이블이 생성되고, insert문으로는 초기 데이터 설정도 가능하다.
+          # 주의점은 파일 명에 따라 알파벳 순으로 실행되므로 먼저 create가 되도록 설정해야 한다.
+        ports:
+          - "3306:3306"
+        environment:
+          - MYSQL_DATABASE=pass_local
+          - MYSQL_USER=pass_local_user
+          - MYSQL_PASSWORD=passlocal123
+          - MYSQL_ROOT_PASSWORD=passlocal123
+          - TZ=Asia/Seoul
+    
+    ```
+
+- `.db/conf.d/custom.cnf` 파일
+    ```text/plain
+    [client]
+    default-character-set = utf8mb4
+    
+    [mysqld]
+    authentication-policy = mysql_native_password
+    ```
+
+- `.db/initdb.d/create-table.sql` `.db/initdb.d/insert_data.sql` 등 sql파일 추가
+
+- `./Makefile` 파일
+Docker Compose를 실행
+    ```makefile
+    #백그라운드 실행, 강제 재생성
+    db-up:
+        docker-compose up -d --force-recreate
+    
+    # volume 삭제
+    db-down:
+        docker-compose down -v
+    ```
+telminal 에서 Makefile에 지정한  실행한다.
+
+```ba
+make db-up
+```
+
+### Window OS - make 명령
+Window에서는 위 명령을 실행할 수 없다.  
+https://kjs92980.github.io/p/use-make-in-windows/  
+위 링크를 통해 Chocolatey를 설치하여 make명령어를 실행한다.  
+주의할점은 반드시 PowerShall을 `관리자 권한`으로 실행해야 한다.
+
+### DBeaver 한글 깨지는 경우
+
+```dockerfile
+FROM mysql:8.0.30
+COPY ./db/conf.d /etc/mysql/conf.d
+COPY ./db/initdb.d /docker-entrypoint-initdb.d
+
+RUN chmod 644 /etc/mysql/conf.d/custom.cnf
+```
+
+```yaml
+version: '3.8' # Docker Compose 파일의 버전
+
+services:
+  mysql:
+    build: .
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_DATABASE=pass_local
+      - MYSQL_USER=pass_local_user
+      - MYSQL_PASSWORD=passlocal123
+      - MYSQL_ROOT_PASSWORD=passlocal123
+      - TZ=Asia/Seoul
+```
+
+```makefile
+#백그라운드 실행, 강제 재생성
+db-up:
+	docker-compose up -d --build --force-recreate
+
+# volume 삭제
+db-down:
+	docker-compose down -v
+```
+
+위와같이 설정하면 더이상 한글이 깨지지 않는다.
